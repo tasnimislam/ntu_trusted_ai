@@ -14,7 +14,7 @@ from sklearn.model_selection import train_test_split
 from art.estimators.classification import TensorFlowV2Classifier
 from art.attacks.evasion import BasicIterativeMethod
 from art.defences.trainer import AdversarialTrainer
-from art.attacks.evasion import FastGradientMethod
+
 
 def build(shape, classes,only_digits=True):
     model_1= Sequential()
@@ -117,67 +117,3 @@ def perplexity_medium_fixed(predictions, test):
   exposure = - perplexity
   return exposure
 
-def adverserial_predict(load_weight, classifier_weight):
-    cifar_train, cifar_label_train, cifar_test, cifar_label_test = load_dataset_cifar()
-
-    classifier = model_pre_adverserial(classifier_weight)
-    # Here is the command we had used for the Adversarial Training
-    attacks = BasicIterativeMethod(classifier, eps=0.3, eps_step=0.01, max_iter=1000)
-    trainer = MyAdvTrainer(classifier, attacks, ratio=1.0)
-
-    # load trainer
-    trainer.load_model(load_weight)
-    attacker = FastGradientMethod(classifier, eps=0.5)
-    x_test_adv = attacker.generate(cifar_test[:100])
-
-    # "Adversarial test data (first 100 images): Adverserial Training setup"
-
-    ex = perplexity_medium_fixed(trainer.predict(x_test_adv), cifar_label_test[:100])
-
-    x_test_adv_pred_after_attack = np.argmax(trainer.predict(x_test_adv), axis=1)
-    nb_correct_adv_pred = np.sum(x_test_adv_pred_after_attack == np.argmax(cifar_label_test[:100], axis=1))
-
-    print("Adversarial test data (first 100 images): Adverserial Training setup")
-    print("Correctly classified: {}".format(nb_correct_adv_pred))
-    print("Incorrectly classified: {}".format(100 - nb_correct_adv_pred))
-
-    print(ex/10000)
-
-    # "test data (first 100 images): Adverserial Training setup"
-
-    ex = perplexity_medium_fixed(trainer.predict(cifar_test[:100]), cifar_label_test[:100])
-
-    x_test_adv_pred_after_attack = np.argmax(trainer.predict(cifar_test[:100]), axis=1)
-    nb_correct_adv_pred = np.sum(x_test_adv_pred_after_attack == np.argmax(cifar_label_test[:100], axis=1))
-
-    print("test data (first 100 images): Adverserial Training setup")
-    print("Correctly classified: {}".format(nb_correct_adv_pred))
-    print("Incorrectly classified: {}".format(100 - nb_correct_adv_pred))
-
-    print(ex/10000)
-
-    # "test data (first 100 images): Normal Training setup"
-
-    ex = perplexity_medium_fixed(classifier.predict(cifar_test[:100]), cifar_label_test[:100])
-
-    x_test_adv_pred_after_attack = np.argmax(classifier.predict(cifar_test[:100]), axis=1)
-    nb_correct_adv_pred = np.sum(x_test_adv_pred_after_attack == np.argmax(cifar_label_test[:100], axis=1))
-
-    print("test data (first 100 images): Normal Training setup")
-    print("Correctly classified: {}".format(nb_correct_adv_pred))
-    print("Incorrectly classified: {}".format(100 - nb_correct_adv_pred))
-
-    print(ex / 10000)
-
-    # "Adverserial test data (first 100 images): Normal Training setup"
-
-    ex = perplexity_medium_fixed(classifier.predict(x_test_adv), cifar_label_test[:100])
-
-    x_test_adv_pred_after_attack = np.argmax(classifier.predict(x_test_adv), axis=1)
-    nb_correct_adv_pred = np.sum(x_test_adv_pred_after_attack == np.argmax(cifar_label_test[:100], axis=1))
-
-    print("Adverserial test data (first 100 images): Normal Training setup")
-    print("Correctly classified: {}".format(nb_correct_adv_pred))
-    print("Incorrectly classified: {}".format(100 - nb_correct_adv_pred))
-
-    print(ex / 10000)
